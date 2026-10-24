@@ -16,5 +16,7 @@
 | GET | /api/dataset/quality | Validation report from the validation service (valid, issues, warnings, checks) |
 | POST | /api/dataset/clean | Clean the dataset; optional body {"impute_missing_rating": "median" or "mean"} |
 | GET | /api/dataset/preview | Table rows: version=original or cleaned, page, page_size |
+| GET | /api/dashboard/filters | Available values for the dashboard filters |
+| POST | /api/dashboard | KPIs and chart data; body {"filters": {"category": ["Clothing"], "gender": ["Female"]}}, send {} for no filters. Filter keys: category, gender, season, location, subscription_status, payment_method |
 
 More endpoints (upload, KPIs, analytics, reports) will be added in later sprints.
