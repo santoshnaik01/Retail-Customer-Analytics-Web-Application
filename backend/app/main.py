@@ -1,15 +1,33 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.config import APP_TITLE, APP_VERSION, APP_DESCRIPTION, CORS_ORIGINS
-from app.utils.responses import success_response, error_response
+from app.api.routes_dataset import router as dataset_router
 from app.api.routes_upload import router as upload_router
+from app.config import APP_DESCRIPTION, APP_TITLE, APP_VERSION, CORS_ORIGINS
+from app.services import dataset_store
+from app.utils.responses import error_response, success_response
 
-app = FastAPI(title=APP_TITLE, version=APP_VERSION, description=APP_DESCRIPTION)
+
+@asynccontextmanager
+async def lifespan(app):
+    dataset_store.load_default()
+    yield
+
+
+app = FastAPI(
+    title=APP_TITLE,
+    version=APP_VERSION,
+    description=APP_DESCRIPTION,
+    lifespan=lifespan,
+)
+
 app.include_router(upload_router)
+app.include_router(dataset_router)
 
 app.add_middleware(
     CORSMiddleware,
