@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes_dataset import router as dataset_router
 from app.api.routes_dashboard import router as dashboard_router
+from app.api.routes_customers import router as customers_router
 from app.api.routes_upload import router as upload_router
 from app.config import APP_DESCRIPTION, APP_TITLE, APP_VERSION, CORS_ORIGINS
 from app.services import dataset_store
@@ -30,6 +31,7 @@ app = FastAPI(
 app.include_router(upload_router)
 app.include_router(dataset_router)
 app.include_router(dashboard_router)
+app.include_router(customers_router)
 
 app.add_middleware(
     CORSMiddleware,
