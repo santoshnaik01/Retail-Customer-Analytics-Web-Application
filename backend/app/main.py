@@ -6,8 +6,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import APP_TITLE, APP_VERSION, APP_DESCRIPTION, CORS_ORIGINS
 from app.utils.responses import success_response, error_response
+from app.api.routes_upload import router as upload_router
 
 app = FastAPI(title=APP_TITLE, version=APP_VERSION, description=APP_DESCRIPTION)
+app.include_router(upload_router)
 
 app.add_middleware(
     CORSMiddleware,
