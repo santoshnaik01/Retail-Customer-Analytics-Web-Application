@@ -1,0 +1,82 @@
+
+.csv-upload {
+  margin: 28px 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #111827;
+}
+
+.csv-upload h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.csv-upload > p {
+  color: #64748b;
+}
+
+.csv-upload__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 24px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.csv-upload__file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+.csv-upload__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.csv-upload button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.csv-upload button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.csv-upload button.csv-upload__clear {
+  background: #64748b;
+}
+
+.csv-upload__progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.csv-upload__progress progress {
+  width: 220px;
+  max-width: 100%;
+}
+
+.csv-upload__error {
+  color: #dc2626;
+}
+
+.csv-upload__success {
+  color: #15803d;
+}
