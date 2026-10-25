@@ -1,70 +1,41 @@
-```jsx
-import React from "react";
-import Plot from "react-plotly.js";
+import React from 'react';
+import Plotly from 'plotly.js-dist-min';
+import createPlotlyComponent from 'react-plotly.js/factory';
 
-export default function PlotlyChart({
-  title,
-  data = [],
-  layout = {},
-  loading = false,
-  error = null,
-  height = 350,
-  emptyMessage = "No data available for this chart.",
-}) {
-  if (loading) {
-    return (
-      <div className="plotly-chart-state" role="status">
-        Loading {title || "chart"}...
-      </div>
-    );
-  }
+const Plot = createPlotlyComponent(Plotly);
 
-  if (error) {
-    return (
-      <div className="plotly-chart-state plotly-chart-error" role="alert">
-        {typeof error === "string"
-          ? error
-          : "Unable to load chart data."}
-      </div>
-    );
-  }
+export default function PlotlyChart({ data = [], layout = {}, config = {}, style = {}, className = '' }) {
+  const defaultConfig = {
+    responsive: true,
+    displayModeBar: false,
+    ...config,
+  };
 
-  if (!Array.isArray(data) || data.length === 0) {
-    return (
-      <div className="plotly-chart-state">
-        {emptyMessage}
-      </div>
-    );
-  }
+  const defaultLayout = {
+    autosize: true,
+    margin: { t: 30, r: 20, b: 40, l: 45 },
+    paper_bgcolor: 'transparent',
+    plot_bgcolor: 'transparent',
+    font: {
+      family: 'Inter, system-ui, -apple-system, sans-serif',
+      color: '#64748B',
+      size: 11,
+    },
+    ...layout,
+  };
 
   return (
-    <section className="plotly-chart">
-      {title && <h3 className="plotly-chart-title">{title}</h3>}
-
+    <div
+      className={`chart-container ${className}`}
+      style={{ width: '100%', height: '100%', minHeight: '260px', ...style }}
+    >
       <Plot
         data={data}
-        layout={{
-          autosize: true,
-          height,
-          margin: { t: 25, r: 20, b: 55, l: 60 },
-          paper_bgcolor: "transparent",
-          plot_bgcolor: "transparent",
-          font: {
-            family: "Arial, sans-serif",
-            size: 12,
-            color: "#334155",
-          },
-          ...layout,
-        }}
-        config={{
-          responsive: true,
-          displaylogo: false,
-          modeBarButtonsToRemove: ["lasso2d", "select2d"],
-        }}
-        useResizeHandler
-        style={{ width: "100%", height }}
+        layout={defaultLayout}
+        config={defaultConfig}
+        useResizeHandler={true}
+        style={{ width: '100%', height: '100%' }}
       />
-    </section>
+    </div>
   );
 }
-```
