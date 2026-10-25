@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
 import Dashboard from './pages/Dashboard';
-import Upload from './pages/Upload.jsx';
+import Upload from './pages/Upload';
 import Customers from './pages/Customers';
 import ShoppingPatterns from './pages/ShoppingPatterns';
 import DataExplorer from './pages/DataExplorer';
