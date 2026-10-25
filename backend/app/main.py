@@ -1,67 +1,66 @@
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
-from app.api.routes_dataset import router as dataset_router
-from app.api.routes_dashboard import router as dashboard_router
-from app.api.routes_customers import router as customers_router
+from app.config import APP_TITLE, APP_VERSION, APP_DESCRIPTION, CORS_ORIGINS
+from app.services.dataset_manager import DatasetManager
 from app.api.routes_upload import router as upload_router
-from app.config import APP_DESCRIPTION, APP_TITLE, APP_VERSION, CORS_ORIGINS
-from app.services import dataset_store
-from app.utils.responses import error_response, success_response
-
-
-@asynccontextmanager
-async def lifespan(app):
-    dataset_store.load_default()
-    yield
-
+from app.api.routes_dashboard import router as dashboard_router
+from app.api.routes_analytics import router as analytics_router
+from app.api.routes_explorer import router as explorer_router
+from app.api.routes_reports import router as reports_router
 
 app = FastAPI(
     title=APP_TITLE,
     version=APP_VERSION,
     description=APP_DESCRIPTION,
-    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
-app.include_router(upload_router)
-app.include_router(dataset_router)
-app.include_router(dashboard_router)
-app.include_router(customers_router)
-
+# Enable CORS for local React frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request, exc):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=error_response("HTTP_ERROR", str(exc.detail)),
-    )
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc):
-    return JSONResponse(
-        status_code=422,
-        content=error_response("INVALID_REQUEST", "The request data is invalid."),
-    )
+# Register route modules
+app.include_router(upload_router)
+app.include_router(dashboard_router)
+app.include_router(analytics_router)
+app.include_router(explorer_router)
+app.include_router(reports_router)
 
 
 @app.get("/")
 def root():
-    return success_response({"service": "retail-analytics-api"}, "API is running")
+    manager = DatasetManager.get_instance()
+    has_dataset = manager.original_df is not None
+    return {
+        "name": APP_TITLE,
+        "version": APP_VERSION,
+        "status": "running",
+        "docs_url": "/docs",
+        "dataset_loaded": has_dataset,
+        "dataset_name": manager.filename if has_dataset else None,
+        "records_count": len(manager.original_df) if has_dataset else 0,
+    }
 
 
 @app.get("/api/health")
 def health_check():
-    return success_response({"service": "retail-analytics-api", "state": "healthy"})
+    manager = DatasetManager.get_instance()
+    has_data = manager.original_df is not None
+    return {
+        "status": "healthy",
+        "dataset_loaded": has_data,
+        "filename": manager.filename if has_data else None,
+        "row_count": len(manager.original_df) if has_data else 0,
+        "is_cleaned": manager.is_cleaned,
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)

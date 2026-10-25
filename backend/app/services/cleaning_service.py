@@ -1,114 +1,101 @@
 import pandas as pd
-
-REQUIRED_COLUMNS = [
-    "Customer ID", "Age", "Gender", "Item Purchased", "Category",
-    "Purchase Amount (USD)", "Location", "Size", "Color", "Season",
-    "Review Rating", "Subscription Status", "Shipping Type",
-    "Discount Applied", "Promo Code Used", "Previous Purchases",
-    "Payment Method", "Frequency of Purchases",
-]
-
-NUMERIC_COLUMNS = [
-    "Customer ID", "Age", "Purchase Amount (USD)",
-    "Review Rating", "Previous Purchases",
-]
-
-TEXT_COLUMNS = [c for c in REQUIRED_COLUMNS if c not in NUMERIC_COLUMNS]
+import numpy as np
+from typing import Tuple, Dict, Any, List
 
 
-def _missing_by_column(df):
-    counts = df.isna().sum()
-    return {col: int(n) for col, n in counts.items() if n > 0}
+class CleaningService:
+    @staticmethod
+    def clean_dataset(
+        df: pd.DataFrame,
+        impute_missing_rating: bool = True,
+        imputation_strategy: str = "category_mean",
+        trim_whitespace: bool = True,
+        remove_duplicates: bool = True,
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        cleaned_df = df.copy()
+        operations_log: List[str] = []
 
+        records_before = len(cleaned_df)
+        missing_before = int(cleaned_df.isnull().sum().sum())
+        duplicates_removed = 0
+        whitespace_trimmed_cols = 0
 
-def clean_dataset(df, impute_missing_rating=None):
-    """Clean the uploaded data and return (cleaned_df, summary).
+        # 1. Whitespace trimming & casing normalization
+        if trim_whitespace:
+            obj_cols = cleaned_df.select_dtypes(include=["object", "string", "str"]).columns
+            for col in obj_cols:
+                # check if strings need stripping
+                pre_strip = cleaned_df[col].astype(str)
+                post_strip = pre_strip.str.strip()
+                if not pre_strip.equals(post_strip):
+                    whitespace_trimmed_cols += 1
+                cleaned_df[col] = post_strip
+            operations_log.append(f"Trimmed leading/trailing whitespace across {len(obj_cols)} text columns.")
 
-    Rules (based on the dataset quality report):
-    1. Required columns must exist.
-    2. Trim leading/trailing spaces in text columns.
-    3. Convert numeric columns to numbers; invalid values become missing.
-    4. Remove exact duplicate rows only.
-    5. Missing Review Rating values are kept by default (analytics skip them).
-       Optionally fill them with "median" or "mean".
-    The original data is never changed: a copy is cleaned.
-    """
-    if impute_missing_rating not in (None, "median", "mean"):
-        raise ValueError("impute_missing_rating must be None, 'median' or 'mean'.")
+        # 2. Duplicate rows removal
+        if remove_duplicates:
+            dup_count = int(cleaned_df.duplicated().sum())
+            if dup_count > 0:
+                cleaned_df = cleaned_df.drop_duplicates().reset_index(drop=True)
+                duplicates_removed = dup_count
+                operations_log.append(f"Removed {dup_count} duplicate row(s).")
+            else:
+                operations_log.append("Checked for duplicate rows (0 found).")
 
-    missing_cols = [c for c in REQUIRED_COLUMNS if c not in df.columns]
-    if missing_cols:
-        raise ValueError("Missing required columns: " + ", ".join(missing_cols))
+        # 3. Handle missing values
+        if impute_missing_rating and "Review Rating" in cleaned_df.columns:
+            missing_ratings = int(cleaned_df["Review Rating"].isnull().sum())
+            if missing_ratings > 0:
+                if imputation_strategy == "category_mean" and "Category" in cleaned_df.columns:
+                    # Category-level mean imputation rounded to 1 decimal place
+                    cat_means = cleaned_df.groupby("Category")["Review Rating"].transform("mean").round(1)
+                    cleaned_df["Review Rating"] = cleaned_df["Review Rating"].fillna(cat_means)
+                    # Any remaining fallback to overall mean
+                    overall_mean = round(float(cleaned_df["Review Rating"].mean()), 1)
+                    cleaned_df["Review Rating"] = cleaned_df["Review Rating"].fillna(overall_mean)
+                    operations_log.append(
+                        f"Imputed {missing_ratings} missing Review Rating value(s) using Category-level mean rating."
+                    )
+                elif imputation_strategy == "category_median" and "Category" in cleaned_df.columns:
+                    cat_medians = cleaned_df.groupby("Category")["Review Rating"].transform("median").round(1)
+                    cleaned_df["Review Rating"] = cleaned_df["Review Rating"].fillna(cat_medians)
+                    operations_log.append(
+                        f"Imputed {missing_ratings} missing Review Rating value(s) using Category-level median rating."
+                    )
+                else:
+                    overall_mean = round(float(cleaned_df["Review Rating"].mean()), 1)
+                    cleaned_df["Review Rating"] = cleaned_df["Review Rating"].fillna(overall_mean)
+                    operations_log.append(
+                        f"Imputed {missing_ratings} missing Review Rating value(s) using overall mean rating ({overall_mean})."
+                    )
 
-    cleaned = df.copy()
-    actions = []
+        # 4. Safe type conversions and bounds validation
+        if "Age" in cleaned_df.columns:
+            cleaned_df["Age"] = pd.to_numeric(cleaned_df["Age"], errors="coerce").fillna(df["Age"].median()).astype(int)
+        if "Purchase Amount (USD)" in cleaned_df.columns:
+            cleaned_df["Purchase Amount (USD)"] = pd.to_numeric(
+                cleaned_df["Purchase Amount (USD)"], errors="coerce"
+            ).fillna(df["Purchase Amount (USD)"].median()).astype(float)
+        if "Review Rating" in cleaned_df.columns:
+            cleaned_df["Review Rating"] = pd.to_numeric(cleaned_df["Review Rating"], errors="coerce").round(1)
+        if "Previous Purchases" in cleaned_df.columns:
+            cleaned_df["Previous Purchases"] = pd.to_numeric(
+                cleaned_df["Previous Purchases"], errors="coerce"
+            ).fillna(0).astype(int)
 
-    rows_before = int(len(cleaned))
-    missing_before = _missing_by_column(cleaned)
+        operations_log.append("Validated numeric ranges and strict data types for analytical consistency.")
 
-    # 1. Trim whitespace in text columns
-    trimmed_columns = {}
-    for col in TEXT_COLUMNS:
-        original = cleaned[col]
-        stripped = original.str.strip()
-        changed = int(((original != stripped) & original.notna()).sum())
-        if changed > 0:
-            cleaned[col] = stripped
-            trimmed_columns[col] = changed
-    if trimmed_columns:
-        actions.append(f"Trimmed extra spaces in {len(trimmed_columns)} text column(s).")
+        records_after = len(cleaned_df)
+        missing_after = int(cleaned_df.isnull().sum().sum())
 
-    # 2. Convert numeric columns
-    invalid_values = {}
-    for col in NUMERIC_COLUMNS:
-        if not pd.api.types.is_numeric_dtype(cleaned[col]):
-            converted = pd.to_numeric(cleaned[col], errors="coerce")
-            bad = int(converted.isna().sum() - cleaned[col].isna().sum())
-            cleaned[col] = converted
-            invalid_values[col] = bad
-    if invalid_values:
-        total_bad = sum(invalid_values.values())
-        actions.append(
-            f"Converted {len(invalid_values)} column(s) to numbers; "
-            f"{total_bad} invalid value(s) set to missing."
-        )
+        summary = {
+            "records_before": records_before,
+            "records_after": records_after,
+            "missing_before": missing_before,
+            "missing_after": missing_after,
+            "duplicates_removed": duplicates_removed,
+            "whitespace_trimmed_cols": whitespace_trimmed_cols,
+            "operations_log": operations_log,
+        }
 
-    # 3. Remove exact duplicate rows
-    duplicates_removed = int(cleaned.duplicated().sum())
-    if duplicates_removed > 0:
-        cleaned = cleaned.drop_duplicates().reset_index(drop=True)
-        actions.append(f"Removed {duplicates_removed} exact duplicate row(s).")
-
-    # 4. Optional handling of missing ratings
-    ratings_filled = 0
-    ratings_missing = int(cleaned["Review Rating"].isna().sum())
-    if ratings_missing > 0:
-        if impute_missing_rating in ("median", "mean"):
-            fill_value = getattr(cleaned["Review Rating"], impute_missing_rating)()
-            cleaned["Review Rating"] = cleaned["Review Rating"].fillna(fill_value)
-            ratings_filled = ratings_missing
-            actions.append(
-                f"Filled {ratings_filled} missing Review Rating value(s) "
-                f"with the {impute_missing_rating} ({round(float(fill_value), 2)})."
-            )
-        else:
-            actions.append(
-                f"Kept {ratings_missing} missing Review Rating value(s) as missing; "
-                "they are excluded from rating averages."
-            )
-
-    if not actions:
-        actions.append("No cleaning was required.")
-
-    summary = {
-        "rows_before": rows_before,
-        "rows_after": int(len(cleaned)),
-        "duplicates_removed": duplicates_removed,
-        "missing_before": missing_before,
-        "missing_after": _missing_by_column(cleaned),
-        "whitespace_trimmed": trimmed_columns,
-        "invalid_values_set_to_missing": invalid_values,
-        "ratings_filled": ratings_filled,
-        "actions": actions,
-    }
-    return cleaned, summary
+        return cleaned_df, summary

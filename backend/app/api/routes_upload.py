@@ -1,53 +1,85 @@
-import io
+from fastapi import APIRouter, UploadFile, File, HTTPException
+from app.services.dataset_manager import DatasetManager
+from app.schemas.models import (
+    DatasetSummaryResponse,
+    DataQualityResponse,
+    CleanDatasetRequest,
+    CleaningResultResponse,
+)
 
-import pandas as pd
-from fastapi import APIRouter, File, UploadFile
-from fastapi.responses import JSONResponse
-
-from app.services import dataset_store
-from app.services.validation_service import DatasetValidationService
-from app.utils.responses import error_response, success_response
-
-router = APIRouter(prefix="/api", tags=["Upload"])
-
-MAX_FILE_SIZE_MB = 10
+router = APIRouter(prefix="/api", tags=["Upload & Data Cleaning"])
 
 
-def _error(status_code, code, message):
-    return JSONResponse(status_code=status_code, content=error_response(code, message))
-
-
-@router.post("/upload")
-async def upload_csv(file: UploadFile = File(...)):
-    filename = file.filename or ""
-    if not filename.lower().endswith(".csv"):
-        return _error(400, "UNSUPPORTED_FORMAT", "Please upload a file with the .csv extension.")
-
-    content = await file.read()
-    if len(content) == 0:
-        return _error(400, "EMPTY_FILE", "The uploaded file is empty.")
-    if len(content) > MAX_FILE_SIZE_MB * 1024 * 1024:
-        return _error(413, "FILE_TOO_LARGE", f"The file is larger than {MAX_FILE_SIZE_MB} MB.")
+@router.post("/upload", response_model=DatasetSummaryResponse)
+async def upload_dataset(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".csv"):
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file format. Please upload a valid CSV file (.csv).",
+        )
 
     try:
-        df = pd.read_csv(io.BytesIO(content))
-    except (UnicodeDecodeError, pd.errors.ParserError, pd.errors.EmptyDataError):
-        return _error(400, "UNREADABLE_FILE", "The file could not be read as a valid CSV.")
+        content = await file.read()
+        manager = DatasetManager.get_instance()
+        manager.load_from_bytes(content, file.filename)
+        return manager.get_summary()
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred while processing the CSV: {str(e)}",
+        )
 
-    validation = DatasetValidationService.validate(df)
-    if not validation["valid"]:
-        message = "The dataset failed validation: " + " ".join(validation["issues"])
-        return _error(400, "INVALID_DATASET", message)
 
-    dataset_store.save_original(df, filename)
+@router.get("/dataset/summary", response_model=DatasetSummaryResponse)
+def get_dataset_summary():
+    try:
+        manager = DatasetManager.get_instance()
+        return manager.get_summary()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    data = {
-        "upload_status": "uploaded",
-        "filename": filename,
-        "row_count": int(df.shape[0]),
-        "column_count": int(df.shape[1]),
-        "column_names": list(df.columns),
-        "data_types": {col: str(dtype) for col, dtype in df.dtypes.items()},
-        "validation": validation,
-    }
-    return success_response(data, "File uploaded and validated successfully")
+
+@router.get("/dataset/quality", response_model=DataQualityResponse)
+def get_dataset_quality():
+    try:
+        manager = DatasetManager.get_instance()
+        return manager.get_quality_report()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/dataset/clean", response_model=CleaningResultResponse)
+def clean_dataset(request: CleanDatasetRequest):
+    try:
+        manager = DatasetManager.get_instance()
+        summary = manager.run_cleaning(
+            impute_missing_rating=request.impute_missing_rating,
+            imputation_strategy=request.imputation_strategy,
+            trim_whitespace=request.trim_whitespace,
+            remove_duplicates=request.remove_duplicates,
+        )
+        return CleaningResultResponse(
+            success=True,
+            message="Dataset cleaning completed successfully.",
+            records_before=summary["records_before"],
+            records_after=summary["records_after"],
+            missing_before=summary["missing_before"],
+            missing_after=summary["missing_after"],
+            duplicates_removed=summary["duplicates_removed"],
+            whitespace_trimmed_cols=summary["whitespace_trimmed_cols"],
+            operations_log=summary["operations_log"],
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/dataset/reset", response_model=DatasetSummaryResponse)
+def reset_dataset():
+    try:
+        manager = DatasetManager.get_instance()
+        manager._initialize_default()
+        return manager.get_summary()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset dataset: {str(e)}")
