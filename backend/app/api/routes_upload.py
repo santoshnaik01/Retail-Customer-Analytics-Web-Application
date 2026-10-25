@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.services import dataset_store
+from app.services.validation_service import DatasetValidationService
 from app.utils.responses import error_response, success_response
 
 router = APIRouter(prefix="/api", tags=["Upload"])
@@ -33,8 +34,10 @@ async def upload_csv(file: UploadFile = File(...)):
     except (UnicodeDecodeError, pd.errors.ParserError, pd.errors.EmptyDataError):
         return _error(400, "UNREADABLE_FILE", "The file could not be read as a valid CSV.")
 
-    if df.shape[1] == 0 or df.empty:
-        return _error(400, "NO_DATA", "The CSV file has no data rows.")
+    validation = DatasetValidationService.validate(df)
+    if not validation["valid"]:
+        message = "The dataset failed validation: " + " ".join(validation["issues"])
+        return _error(400, "INVALID_DATASET", message)
 
     dataset_store.save_original(df, filename)
 
@@ -45,5 +48,6 @@ async def upload_csv(file: UploadFile = File(...)):
         "column_count": int(df.shape[1]),
         "column_names": list(df.columns),
         "data_types": {col: str(dtype) for col, dtype in df.dtypes.items()},
+        "validation": validation,
     }
-    return success_response(data, "File uploaded successfully")
+    return success_response(data, "File uploaded and validated successfully")
