@@ -1,71 +1,73 @@
-Retail Customer Behavior & Shopping Trends Analytics Web Application
-A locally run full-stack web application for exploring retail customer behavior and shopping patterns from a CSV dataset. The application uses a React frontend and a FastAPI/Python backend to support data upload, validation, cleaning, analytics, and downloadable outputs.
-Project status: Setup and feature descriptions should be verified against the current repository before this README is treated as final. This guide does not claim that unverified endpoints or tests have passed.
+# Retail Customer Behavior & Shopping Trends Analytics Web Application
 
-Table of Contents
-- Project Overview
-- Objectives
-- Features
-- Technology Stack
-- Architecture
-- Repository Structure
-- Dataset
-- Prerequisites
-- Installation and Setup
-- Running the Application
-- API Documentation
-- Testing
-- Supported Analysis
-- Known Limitations
-- Troubleshooting
-- Team Contributions
-Project Overview
-Retail teams can find it difficult to analyze raw customer and shopping data manually. This project provides a browser-based interface for inspecting a retail CSV, reviewing data quality, exploring analytical summaries, and exporting results.
+A locally run full-stack web application for exploring retail customer behavior and shopping data using CSV files. The project uses a React/Vite frontend and a FastAPI/Python backend.
 
-The application is designed to run locally. It is not intended to be a hosted production service.
-Objectives
-- Make retail CSV data easier to inspect and analyze.
-- Validate dataset structure and highlight data-quality issues.
-- Provide a cleaning workflow and summarize its effects.
-- Present customer and shopping-pattern summaries through KPIs and charts.
-- Allow users to download supported report and export formats.
-- Keep calculations traceable to the selected dataset and filters.
-Features
-The following are intended project capabilities. Availability depends on the implementation currently present in the repository:
+## 1. Project Overview
+
+Retail businesses collect customer and shopping data, but analyzing raw datasets manually can be time-consuming. This application aims to simplify data inspection, cleaning, analysis, visualization, and report generation through a web-based interface.
+
+The application is designed to run locally on a developer's computer.
+
+## 2. Project Objectives
+
+- Upload and inspect retail CSV datasets.
+- Validate dataset structure and identify data-quality issues.
+- Clean data using the available cleaning options.
+- Explore dashboard KPIs, charts, customer demographics, and shopping patterns.
+- Download supported reports and CSV exports.
+- Maintain consistency between displayed analytics and exported results.
+- Provide documentation for setup, testing, and maintenance.
+
+## 3. Features
+
+The project is intended to support the following features, subject to the current implementation:
+
 - CSV upload and dataset preview.
-- Dataset structure and quality validation.
-- Data cleaning and cleaning-summary display.
-- Dashboard KPI cards, charts, and available filters.
+- Dataset validation and data-quality summaries.
+- Data cleaning and cleaning summaries.
+- Dashboard KPI cards and interactive charts.
+- Available dashboard filters.
 - Customer demographic analysis.
-- Product, category, purchase-frequency, spending, discount, promotion, and subscription summaries.
+- Product and category preference analysis.
+- Purchase behavior and spending-pattern analysis.
 - PDF report generation and CSV export, where implemented.
-- FastAPI endpoints for frontend/backend communication.
-Technology Stack
-Layer	Technology
-Frontend	React.js, JavaScript, Vite
-Charts	Plotly / React Plotly integration, where used
-Backend	Python, FastAPI
-Data processing	Pandas, NumPy
-Testing	Pytest
-Version control	Git and GitHub
+- Backend API integration using FastAPI.
 
+## 4. Technology Stack
 
-Check frontend/package.json and backend/requirements.txt for the exact installed dependencies and versions.
-Architecture
-1. The user interacts with the React frontend in a browser.
+| Layer | Technology |
+|---|---|
+| Frontend | React.js, JavaScript, Vite |
+| Backend | Python, FastAPI |
+| Data processing | Pandas, NumPy |
+| Data visualization | Plotly and React Plotly, where configured |
+| Testing | Pytest |
+| Version control | Git and GitHub |
+
+Refer to `frontend/package.json` and `backend/requirements.txt` for the actual dependencies and versions.
+
+## 5. Architecture
+
+The application follows a frontend-backend architecture:
+
+1. The user interacts with the React frontend through a browser.
 2. The frontend sends supported requests to the FastAPI backend.
-3. The backend validates uploaded CSV content and processes data using Python data libraries.
-4. Analytics endpoints return data for dashboard and analysis views.
-5. Supported report/export endpoints return downloadable files.
-The exact endpoint list and request/response schemas are defined by the current backend implementation and can be reviewed through the API documentation when the server is running.
-Repository Structure
-The repository is expected to contain the following main areas. The precise files may differ as development progresses.
+3. The backend validates uploaded CSV data and processes it using Python data libraries.
+4. Analytics endpoints return results for the dashboard and analysis pages.
+5. Implemented report and export endpoints provide downloadable files.
+
+The actual API endpoints and response formats should be verified against the current backend source code.
+
+## 6. Repository Structure
+
+The main project folders are organized as follows:
+
+```text
 Retail-Customer-Analytics-Web-Application/
 ├── backend/
 │   ├── app/
 │   │   ├── api/
-│   │   ├── services/
-│   │   └── ...
+│   │   └── services/
 │   ├── tests/
 │   └── requirements.txt
 ├── frontend/
@@ -76,127 +78,255 @@ Retail-Customer-Analytics-Web-Application/
 │   └── customer_shopping_behavior.csv
 ├── docs/
 └── README.md
-Use Get-ChildItem (PowerShell) or your editor's file explorer to confirm the current structure.
-Dataset
-The project dataset discussed during development is customer_shopping_behavior.csv, with approximately 3,900 records and 18 columns. It includes customer age and gender, purchased item, category, purchase amount in USD, location, size, color, season, review rating, subscription status, shipping type, discount/promo usage, previous purchases, payment method, and purchase frequency.
+```
 
-The Review Rating field has been reported to contain missing values. Recheck the actual CSV before relying on these counts, because the dataset may change.
+This is a representative structure. Check the actual repository for the current files and folders.
 
-Important: The dataset has no transaction-date column. Do not infer chronological trends from it. Seasonal comparisons should use the available Season field only.
-Prerequisites
-Install these tools before starting:
-- Python 3.10 or another version supported by the project's backend dependencies.
-- Node.js and npm versions compatible with the frontend dependencies.
+## 7. Dataset Information
+
+The retail dataset used during development was reported to contain 3,900 rows and 18 columns.
+
+Relevant fields include:
+
+- Customer ID
+- Age
+- Gender
+- Item Purchased
+- Category
+- Purchase Amount (USD)
+- Location
+- Size
+- Color
+- Season
+- Review Rating
+- Subscription Status
+- Shipping Type
+- Discount Applied
+- Promo Code Used
+- Previous Purchases
+- Payment Method
+- Frequency of Purchases
+
+The `Review Rating` column was reported to contain missing values. Verify the current dataset before relying on these counts.
+
+**Important limitation:** The dataset does not contain a transaction-date column. Therefore, chronological transaction trends cannot be derived from this dataset. Seasonal analysis can use the existing `Season` field if implemented.
+
+## 8. Prerequisites
+
+Install the following tools:
+
+- Python compatible with the backend dependencies.
+- Node.js and npm compatible with the frontend dependencies.
 - Git.
-- A code editor such as Visual Studio Code.
-Check installed versions:
+- Visual Studio Code or another code editor.
+
+Verify the installed versions:
+
+```powershell
 python --version
 node --version
 npm --version
 git --version
-Installation and Setup
-Run commands from the repository root unless a step says otherwise.
-1. Get the repository
-If you have not cloned the repository yet:
+```
+
+## 9. Installation and Setup
+
+### Step 1: Clone the Repository
+
+If the repository is not already on your computer:
+
+```powershell
 git clone https://github.com/santoshnaik01/Retail-Customer-Analytics-Web-Application.git
 cd Retail-Customer-Analytics-Web-Application
-If you already have the repository locally, open that existing folder instead of cloning into it again.
-2. Set up the backend
+```
+
+If you already have the repository locally, open that existing folder instead.
+
+### Step 2: Set Up the Backend
+
+From the repository root, run:
+
+```powershell
 cd backend
 python -m venv .venv
-Activate the virtual environment in Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
-If PowerShell blocks activation, use your organization's approved Python environment policy or run the virtual-environment Python executable directly.
-
-Install dependencies:
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-Return to the repository root before setting up the frontend:
-cd ..
-3. Set up the frontend
+```
+
+If the virtual environment is already active, you do not need to activate it again.
+
+If PowerShell blocks virtual-environment activation, follow your system's approved Python environment policy.
+
+### Step 3: Set Up the Frontend
+
+Open a second terminal from the repository root and run:
+
+```powershell
 cd frontend
 npm install
-If the repository contains a committed lockfile, npm ci can be used for a clean, reproducible install. Do not delete or regenerate the lockfile without a reason.
-Running the Application
-Open two terminals in Visual Studio Code.
-Terminal 1 — Backend
+```
+
+If the repository contains a valid `package-lock.json`, you can use `npm ci` for a clean installation.
+
+## 10. Running the Application
+
+Run the backend and frontend in separate terminals.
+
+### Backend Terminal
+
+```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
-If your environment is already activated, omit the activation command. If the project uses a different documented entry point, follow the current backend configuration.
+python -m uvicorn app.main:app --reload
+```
 
-The usual local FastAPI address is:
-- API base: http://127.0.0.1:8000
-- Interactive API docs: http://127.0.0.1:8000/docs
-Open the docs page to confirm the server is running and inspect the endpoints actually registered by the application.
-Terminal 2 — Frontend
+The usual local backend address is:
+
+`http://127.0.0.1:8000`
+
+FastAPI interactive documentation is normally available at:
+
+`http://127.0.0.1:8000/docs`
+
+Use the live API documentation to inspect the endpoints actually registered by the application.
+
+### Frontend Terminal
+
+```powershell
 cd frontend
 npm run dev
-Vite usually prints the local frontend URL, commonly http://localhost:5173. Open the exact URL shown in your terminal.
+```
 
-Keep both terminal processes running while using the application.
-API Documentation
-When the backend is running, open:
+Vite will display the frontend URL in the terminal, commonly:
 
-http://127.0.0.1:8000/docs
+`http://localhost:5173`
 
-Use this page to inspect the endpoints that are actually registered, their parameters, response formats, and error responses. Do not assume that a feature has an endpoint unless it appears in the running API or is documented by the current source code.
-Testing
-Backend tests
-From the backend directory with the project's virtual environment active:
+Open the exact URL printed by Vite. Keep both servers running while using the application.
+
+## 11. Application Workflow
+
+The intended workflow is:
+
+1. Start the frontend and backend.
+2. Upload a supported retail CSV file.
+3. Inspect the dataset preview and validation results.
+4. Apply available data-cleaning operations.
+5. Review the cleaning and data-quality summaries.
+6. Explore dashboard KPIs and charts.
+7. Apply available filters.
+8. Review customer demographics and shopping-pattern analytics.
+9. Download PDF reports or CSV exports where implemented.
+10. Compare displayed and exported values against the selected dataset.
+
+The available operations depend on the current application implementation.
+
+## 12. Testing
+
+### Backend Tests
+
+From the `backend` directory, with the correct Python environment active:
+
+```powershell
 python -m pytest -v
-Review the final summary. Do not report all tests as passed unless the command completes and confirms that result. If test collection fails, resolve import or syntax errors before interpreting test results.
-Frontend checks
-From the frontend directory:
+```
+
+Review the complete test summary. Resolve syntax errors, missing imports, and test-to-code mismatches before interpreting the results.
+
+### Frontend Checks
+
+From the `frontend` directory:
+
+```powershell
 npm run
-This lists the scripts defined by the project. Run the available lint, test, or build scripts shown there; do not assume a test script exists.
-Manual end-to-end checks
-- Upload a valid CSV and inspect the preview.
-- Test an empty file, unsupported file type, and invalid dataset structure.
-- Review cleaning results and data-quality messages.
-- Compare KPI values with independent calculations.
-- Apply available filters and inspect updated charts and tables.
-- Check customer and shopping-pattern summaries.
-- Generate the PDF and inspect its readability and values, if PDF export is implemented.
-- Export CSV and compare its headers, row count, and representative values with the selected dataset.
-- Confirm errors and empty-result states are handled without crashing.
-Supported Analysis
-Analysis should be limited to columns and operations present in the dataset and application implementation. Examples include:
+```
+
+This displays the scripts available in `package.json`. Run the configured build, lint, or test scripts as appropriate.
+
+### Manual Testing Checklist
+
+- Upload a valid CSV file.
+- Test empty files and unsupported file types.
+- Test datasets with missing or invalid columns.
+- Inspect data previews and quality summaries.
+- Verify cleaning results.
+- Compare KPI calculations with independent calculations.
+- Test available dashboard filters.
+- Review customer and shopping-pattern summaries.
+- Inspect generated PDF and CSV files, where implemented.
+- Confirm that displayed and exported values are consistent.
+- Check error handling and empty-result states.
+
+Report tests as successful only after executing them and verifying their results.
+
+## 13. Supported Analysis
+
+Depending on the current implementation, analysis may include:
+
 - Customer age, gender, and location distributions.
 - Purchased item and product category summaries.
 - Purchase amount totals and averages.
-- Review rating summaries, with missing ratings handled consistently.
+- Review rating summaries.
 - Purchase frequency and previous-purchase summaries.
 - Discount and promotional-code usage.
-- Subscription status, season, size, color, shipping type, and payment-method distributions where implemented.
-Clearly distinguish record counts from distinct-customer counts. Label purchase amounts in USD.
-Known Limitations
-- The dataset does not contain a transaction-date column, so chronological time-series analysis is not supported by the source data.
-- Missing review ratings require explicit, consistent handling.
+- Subscription status.
+- Seasonal, size, color, shipping-type, and payment-method distributions.
+
+Clearly distinguish record counts from distinct customer counts. Label purchase amounts in USD and document how missing values are handled.
+
+## 14. Known Limitations
+
+- The dataset has no transaction-date column, so chronological transaction analysis is not supported by the source data.
+- Missing review ratings must be handled consistently.
 - Results depend on the selected dataset, cleaning operations, and active filters.
-- Report generation, exports, filters, and analytics are only available to the extent that the current code implements them.
-- This application is designed for local development; deployment, authentication, production security, and multi-user persistence should not be assumed.
-Troubleshooting
-Frontend cannot connect to the backend
+- Features and endpoints are available only if implemented in the current source code.
+- The project is intended for local development; production deployment and production security should not be assumed.
+
+## 15. Troubleshooting
+
+### Frontend Cannot Connect to the Backend
+
 - Confirm the backend server is running.
-- Open http://127.0.0.1:8000/docs and check whether the API responds.
-- Verify the frontend's configured API base URL and backend CORS settings.
-- Read both terminal outputs and the browser console for the actual error.
-uvicorn or a Python package is not found
-- Confirm the backend virtual environment is activated.
-- Run python -m pip install -r requirements.txt.
-- Start the app using python -m uvicorn app.main:app --reload if the uvicorn command is not found.
-npm run dev fails
-- Confirm the terminal is in the frontend directory.
-- Run npm install and retry.
-- Check the error output and Node.js version against the project's dependencies.
-Tests fail during collection
-- Fix syntax errors and missing imports first.
-- Ensure test imports match the actual modules in backend/app.
-- Run python -m pytest -v again and review the full failure summary.
-Team Contributions
-- Pratap: Frontend development.
-- Saraswathi: Backend development.
-- Santosh K Naik: Data analysis, validation, testing, and project documentation.
-Project Repository
-GitHub: https://github.com/santoshnaik01/Retail-Customer-Analytics-Web-Application
+- Open `http://127.0.0.1:8000/docs`.
+- Verify the frontend API base URL.
+- Check backend CORS settings.
+- Review the browser console and both terminal outputs.
+
+### Python Package or Uvicorn Not Found
+
+From the `backend` directory, activate the correct environment and run:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+```
+
+### Frontend Does Not Start
+
+- Confirm the terminal is in the `frontend` directory.
+- Run `npm install`.
+- Check the Node.js version.
+- Review the error output and configured npm scripts.
+
+### Pytest Fails During Collection
+
+- Fix syntax errors.
+- Confirm test imports refer to existing modules.
+- Verify that required dependencies are installed.
+- Rerun `python -m pytest -v` and inspect the full output.
+
+## 16. Team Responsibilities
+
+- **Pratap:** Frontend development.
+- **Saraswathi:** Backend development.
+- **Santosh K Naik:** Data analysis, validation, testing, and documentation.
+
+Update this section if the final task assignments differ.
+
+## 17. GitHub Repository
+
+[Retail Customer Analytics Web Application](https://github.com/santoshnaik01/Retail-Customer-Analytics-Web-Application)
+
+## 18. Documentation Maintenance
+
+Keep this README aligned with the actual source code. Update the setup commands, dependency details, repository structure, API references, and feature descriptions whenever the implementation changes.
